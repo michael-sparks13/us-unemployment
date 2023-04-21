@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>US Unemployment</title>
+    <!-- Should external libraries be updated? -->
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Suwannaphum:wght@300&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: whitesmoke;
+        font-family: "Suwannaphum", serif;
+        color: #0d0000;
+        font-size: 100%;
+      }
+
+      h1 {
+        position: absolute;
+        z-index: 650;
+        top: 10px;
+        left: 15px;
+        padding: 8px 15px;
+        margin: 0;
+        color: whitesmoke;
+        font-size: 1.5em;
+        background: rgba(25, 25, 25, 0.8);
+        border-radius: 5px;
+      }
+
+      #map {
+        position: absolute;
+        width: 100%;
+        top: 0;
+        bottom: 0;
+      }
+
+      h2 {
+        position: absolute;
+        z-index: 650;
+        top: 10px;
+        left: 15px;
+        padding: 8px 15px;
+        margin: 0;
+        color: whitesmoke;
+        font-size: 1.2em;
+        text-transform: uppercase;
+        background: rgba(25, 25, 25, 0.8);
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      h2:hover {
+        background: rgb(72, 72, 72);
+      }
+
+      h2:active {
+        background: rgb(228, 175, 0);
+      }
+
+      #modal {
+        display: none;
+        position: absolute;
+        z-index: 2000;
+        padding: 10px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: whitesmoke;
+        font-size: 1.5em;
+      }
+
+      #modal .container {
+        width: 500px;
+        margin: 10px auto;
+        padding: 5px 20px;
+        position: relative;
+        background: rgba(25, 25, 25, 0.8);
+        border-radius: 5px;
+        border: #0d0000 1px solid;
+      }
+
+      #modal a:link,
+      #modal a:visited {
+        color: rgb(228, 175, 0);
+      }
+
+      #modal a:hover {
+        color: rgb(255, 234, 166);
+      }
+
+      #modal div {
+        margin: 20px auto;
+      }
+
+      #modal h1 {
+        display: none;
+      }
+
+      #modal p {
+        font-size: 1.1rem;
+        line-height: 1.5rem;
+        margin: 5px 0;
+      }
+
+      #modal .footer {
+        font-size: 1rem;
+        color: rgb(201, 201, 201);
+        text-align: center;
+      }
+
+      #modal span {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        cursor: pointer;
+      }
+
+      .legend {
+        font-family: Lato, sans-serif;
+        padding: 6px 8px;
+        font-size: 1em;
+        background: rgba(75, 75, 75, 0.8);
+        color: whitesmoke;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        width: 160px;
+      }
+
+      .legend h3 {
+        font-size: 1.1em;
+        font-weight: bold;
+        line-height: 1em;
+        color: whitesmoke;
+        margin: 0;
+      }
+
+      .legend h3 span {
+        font-size: 1.3em;
+        margin: 0 20px 0 0;
+      }
+
+      .legend ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 12px 4px 0;
+      }
+
+      .legend li {
+        list-style-type: none;
+        height: 22px;
+      }
+
+      .legend span {
+        width: 30px;
+        height: 20px;
+        float: left;
+        margin-right: 10px;
+      }
+
+      #ui-controls {
+        font-family: Lato, sans-serif;
+        width: 176px;
+        padding: 8px 25px 8px 15px;
+        background: rgba(75, 75, 75, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        color: whitesmoke;
+      }
+
+      #ui-controls .min {
+        float: left;
+      }
+
+      #ui-controls .max {
+        float: right;
+        margin-right: -15px;
+      }
+
+      .year-slider {
+        width: 100%;
+      }
+
+      label {
+        font-size: 1.1em;
+        font-weight: bold;
+      }
+
+      /* Small devices (portrait phones, 576px and below) */
+      @media (max-width: 576px) and (orientation: portrait) {
+        h1 {
+          display: none;
+        }
+
+        #modal .container {
+          width: 90%;
+        }
+
+        #modal h1 {
+          display: block;
+          position: relative;
+          margin: 20px auto;
+          padding: 0;
+          font-size: 1.6rem;
+          top: unset;
+          left: unset;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>US Unemployment Rates: 2001 &ndash; 2021</h1>
+    <h2 id="button">Info</h2>
+    <div id="map"></div>
+    <div id="ui-controls">
+      <label>
+        <span class="min">2001</span>
+        <span class="max">2021</span>
+        <input
+          type="range"
+          min="2001"
+          ,
+          max="2021"
+          ,
+          value="2001"
+          ,
+          step="1"
+          ,
+          class="year-slider"
+        />
+      </label>
+    </div>
+    <div id="modal">
+      <div class="container">
+        <span>
+          &times;
+        </span>
+        <h1>US Unemployment Rates: 2001 &ndash; 2021</h1>
+        <div class="title">Data sources and methods</div>
+
+        <p>
+          County unemployment data acquired from Bureau of Labor Statistics data
+          tables for years 2001 - 2021:
+          <a href="https://www.bls.gov/lau/tables.htm#mcounty">Link</a>
+        </p>
+        <p>
+          Multiple years were aggregated by county using the county and state
+          FIPS codes. Download
+          <a href="data/or-unemployment-rates.csv">CSV</a> file.
+        </p>
+        <p>
+          Rates across the country hit peaks during the post-9/11 recession,
+          after the 2008 financial crisis and during covid.
+        </p>
+
+        <div class="footer">New Maps Plus | March, 2023</div>
+      </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+      integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+      crossorigin=""
+    ></script>
+    <!-- papa parse -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.1/papaparse.min.js"
+      integrity="sha512-EbdJQSugx0nVWrtyK3JdQQ/03mS3Q1UiAhRtErbwl1YL/+e2hZdlIcSURxxh7WXHTzn83sjlh2rysACoJGfb6g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <!-- latest version of chroma.js, with updated hash value via: https://www.srihash.org/ -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"
+      integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      // get page elements
+      const modal = document.querySelector("#modal");
+      const button = document.querySelector("#button");
+      const h1 = document.querySelector("h1");
+
+      // display modal when button is clicked
+      button.addEventListener("click", function () {
+        modal.style.display = "block";
+      });
+
+      // close modal when user clicks anywhere on the page
+      modal.addEventListener("click", function () {
+        modal.style.display = "none";
+      });
+
+      // Set button UI
+      buttonUI();
+
+      // Add event listener for window resize
+      // When page rotates or is resized, reset page UI
+      window.addEventListener("resize", buttonUI);
+
+      // map options
+      const options = {
+        scrollWheelZoom: true,
+        zoomSnap: 0.1,
+        dragging: true,
+        zoomControl: false,
+        // center: [36.5787865668484, -98.2713790576422],
+        // zoom: 4,
+      };
+
+      let currentYear = "2001";
+      // create the Leaflet map
+      const map = L.map("map", options);
+
+      L.control
+        .zoom({
+          position: "bottomright",
+        })
+        .addTo(map);
+
+      // // request tiles and add to map
+      // const tiles = L.tileLayer(
+      //   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      //   {
+      //     attribution:
+      //       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      //     subdomains: "abcd",
+      //     maxZoom: 20,
+      //   }
+      // ).addTo(map);
+
+      map.createPane('labels');
+      map.getPane('labels').style.zIndex = 404;
+
+      // request tiles and add to map
+      const tiles = L.tileLayer(
+        "http://{s}.tile.stamen.com/toner-background/{z}/{x}/{y}.{ext}",
+        {
+          attribution:
+            'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          subdomains: "abcd",
+          ext: "png",
+          opacity: 0.5
+        }
+      ).addTo(map);
+
+      // Stamen toner labels
+      const labels = L.tileLayer(
+        "http://{s}.tile.stamen.com/toner-labels/{z}/{x}/{y}.{ext}",
+        {
+          attribution:
+            'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          subdomains: "abcd",
+          ext: "png",
+          pane: "labels",
+          opacity: 1,
+        }
+      ).addTo(map);
+
+      map.on('zoomend', function () {
+        if (map.getZoom() > 7) {
+          labels.setOpacity(0);
+        } else {
+          labels.setOpacity(1);
+        }
+      });
+
+
+      // AJAX request for GeoJSON data
+      fetch("data/us-counties.json")
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (counties) {
+          Papa.parse("data/us-unemployment-counties.csv", {
+            download: true,
+            header: true,
+            complete: function (data) {
+              processData(counties, data);
+            },
+          });
+          return fetch("https://newmapsplus.github.io/assets/data/us_states_20m.geojson");
+        })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          drawAnotherLayer(data);
+        })
+        .catch(function (error) {
+          console.log(`Oops, we ran into the following error:`, error);
+        }); // end fetch and promise chain
+
+      function processData(counties, data) {
+        //create geoid field on data object
+        for (let j of data.data) {
+          j.GEOID = j.STATE_FIP + j.COUNTY_FIP;
+        }
+
+        //then combine datasets in browser
+        for (let i of counties.features) {
+          for (let j of data.data) {
+            if (i.properties.GEOID === j.GEOID) {
+              i.properties.unemploymentData = j;
+              break;
+            }
+          }
+        }
+        //create breaks once, across entire range of data
+        const rates = []; //start here, remove NaN from rates
+
+        counties.features.forEach(function (county) {
+          //console.log(county.properties.unemploymentData)
+          for (const prop in county.properties.unemploymentData) {
+            const exclude = ["COUNTY_FIP", "STATE_FIP", "NAME", "GEOID"];
+              if (!exclude.includes(prop)) { console.log(prop) }
+            if (
+              prop != "GEOID" && // 15005 is Kalawao County, HI. Fascinating story.
+              prop != "NAME" &&
+              prop != "STATE_FIP" &&
+              prop != "COUNTY_FIP"
+            ) {
+              if (!county.properties.unemploymentData[prop] == false) {
+                rates.push(Number(county.properties.unemploymentData[prop]));
+              }
+            }
+          }
+        });
+        //use logarithmic breaks
+        let breaks = chroma.limits(rates, "l", 5);
+        console.log("breaks", breaks);
+        let colorize = chroma
+          .scale(chroma.brewer.YlOrRd)
+          .classes(breaks)
+          .mode("lab");
+
+        drawMap(counties, colorize);
+        drawLegend(breaks, colorize);
+      } // end processData()
+
+      function drawMap(counties, colorize) {
+        // create Leaflet object with geometry data and add to map
+        const dataLayer = L.geoJson(counties, {
+          style: function (feature) {
+            return {
+              color: "black",
+              weight: 1,
+              fillOpacity: 1,
+              fillColor: "#D3D3D3",
+            };
+          },
+
+          onEachFeature: function (feature, layer) {
+            layer.on("mouseover", function () {
+              layer
+                .setStyle({
+                  color: "#fff",
+                  weight: 2,
+                })
+                .bringToFront();
+            });
+
+            layer.on('mouseout', function () {
+                layer
+                .setStyle({
+                    color: "#000",
+                    weight: 1
+                })
+            })
+          },
+        }).addTo(map);
+
+        updateMap(dataLayer, colorize, currentYear);
+        createSliderUI(dataLayer, colorize);
+      } // end drawMap()
+
+      function updateMap(dataLayer, colorize, currentYear) {
+        dataLayer.eachLayer(function (layer) {
+          let props = layer.feature.properties.unemploymentData;
+          //only color/add tooltip if county has data
+          // Note: that chroma.js will return a color even if the value is NaN, null, etc.
+          // which is #ccc. 
+          let tooltipInfo = `<b>No data available</b></br>`;
+          layer.setStyle({
+            fillColor: "#ccc", // Addendum: need to set a color for counties with no data
+            // for a given year, otherwise it take the previous iteration's color.
+          });
+
+          if (props && props[currentYear]) {
+            layer.setStyle({
+              fillColor: colorize(Number(props[currentYear])),
+            });
+            tooltipInfo = `<b>${props.NAME}</b><br>
+          ${props[
+            currentYear
+          ].toLocaleString()}% unemployment rate in <b>${currentYear}</b>`;
+          }
+          layer.bindTooltip(tooltipInfo, {
+              sticky: false,
+            });
+        });
+      } // end updateMap()
+
+      function drawLegend(breaks, colorize) {
+        // create a Leaflet control for the legend
+        const legendControl = L.control({
+          position: "topright",
+        });
+
+        // when the control is added to the map
+        legendControl.onAdd = function (map) {
+          // create a new division element with class of 'legend' and return
+          const legend = L.DomUtil.create("div", "legend");
+          return legend;
+        };
+
+        // add the legend control to the map
+        legendControl.addTo(map);
+
+        // select div and create legend title
+        const legend = document.querySelector(".legend");
+        legend.innerHTML = "<h3><span>2001</span> Unemployment Rates</h3><ul>";
+
+        // loop through the break values
+        for (let i = 0; i < breaks.length - 1; i++) {
+          // determine color value
+          const color = colorize(breaks[i], breaks);
+
+          // create legend item
+          const classRange = `<li><span style="background:${color}"></span>
+        ${parseFloat(breaks[i].toLocaleString()).toFixed(2)} &mdash;
+        ${parseFloat(breaks[i + 1].toLocaleString()).toFixed(2)}% </li>`;
+
+          // append to legend unordered list item
+          legend.innerHTML += classRange;
+        }
+
+        legend.innerHTML += `<li><span style="background:#D3D3D3"></span>
+        No data
+        </li>`;
+        // close legend unordered list
+        legend.innerHTML += "</ul>";
+      } // end drawLegend()
+
+      function createSliderUI(dataLayer, colorize) {
+        // create Leaflet control for the slider
+        const sliderControl = L.control({ position: "bottomleft" });
+
+        // when added to the map
+        sliderControl.onAdd = function (map) {
+          // select an existing DOM element with an id of "ui-controls"
+          const slider = L.DomUtil.get("ui-controls");
+
+          // disable scrolling of map while using controls
+          L.DomEvent.disableScrollPropagation(slider);
+
+          // disable click events while using controls
+          L.DomEvent.disableClickPropagation(slider);
+
+          // return the slider from the onAdd method
+          return slider;
+        };
+
+        // add the control to the map
+        sliderControl.addTo(map);
+
+        const slider = document.querySelector(".year-slider");
+
+        // listen for changes on input element
+        slider.addEventListener("input", function (e) {
+          // get the value of the selected option
+          const currentYear = e.target.value;
+          // update the map with current timestamp
+          updateMap(dataLayer, colorize, currentYear);
+          // update timestamp in legend heading
+          document.querySelector(".legend h3 span").innerHTML = currentYear;
+        });
+      } // end createSliderUI()
+
+      function buttonUI() {
+        button.style.top = h1.offsetHeight + 20 + "px";
+      }
+
+      function drawAnotherLayer(data) {
+        const bounds = L.latLngBounds();
+        L.geoJson(data, {
+          style: function (feature) {
+            return {
+              color: "#222",
+              weight: 2,
+              fillOpacity: 0,
+              interactive: false,
+            };
+          },onEachFeature: function (feature, layer) {
+                const name = feature.properties.NAME;
+                if (name == "Florida" || name == "Washington" || name == "Maine") {
+                    console.log(feature)
+                    bounds.extend(layer.getBounds());
+                }
+                }
+            
+            }).addTo(map);
+            map.fitBounds(bounds, {
+                padding: [50, 50],
+                animate: false,
+            });
+      }
+    </script>
+  </body>
+</html>
