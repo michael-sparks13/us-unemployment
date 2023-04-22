@@ -361,7 +361,7 @@
 
       // Stamen toner labels
       const labels = L.tileLayer(
-        "http://{s}.tile.stamen.com/toner-labels/{z}/{x}/{y}.{ext}",
+        "https://stamen-tiles-{s}.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}{r}.{ext}",
         {
           attribution:
             'Map tiles by <a href="https://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -443,7 +443,6 @@
         });
         //use logarithmic breaks
         let breaks = chroma.limits(rates, "l", 5);
-        console.log("breaks", breaks);
         let colorize = chroma
           .scale(chroma.brewer.YlOrRd)
           .classes(breaks)
@@ -609,7 +608,6 @@
           },onEachFeature: function (feature, layer) {
                 const name = feature.properties.NAME;
                 if (name == "Florida" || name == "Washington" || name == "Maine") {
-                    console.log(feature)
                     bounds.extend(layer.getBounds());
                 }
                 }
